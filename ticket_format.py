@@ -16,7 +16,7 @@ DEFAULT_LOGO = STATIC_DIR / "cursor-logo.png"
 TICKET_TITLE = os.getenv("TICKET_TITLE", "Cafe Cursor Bali")
 TICKET_LINE_WIDTH = int(os.getenv("TICKET_LINE_WIDTH", "32"))
 TICKET_LOGO_MAX_WIDTH = int(os.getenv("TICKET_LOGO_MAX_WIDTH", "280"))
-TICKET_LOGO_THRESHOLD = int(os.getenv("TICKET_LOGO_THRESHOLD", "135"))
+TICKET_LOGO_THRESHOLD = int(os.getenv("TICKET_LOGO_THRESHOLD", "160"))
 
 
 def _rule(width: int = TICKET_LINE_WIDTH) -> str:
@@ -36,24 +36,35 @@ def resolve_logo_path() -> Path | None:
 
 
 def prepare_logo_image(path: Path):
-    """Resize and darken logo for 58mm thermal printers."""
-    from PIL import Image, ImageEnhance
+    """Resize and darken logo for 58mm thermal printers.
+
+    cursor-logo.png is light gray on transparency (not black ink). Invert luminance
+    and use alpha so those areas print solid black on thermal paper.
+    """
+    from PIL import Image, ImageEnhance, ImageOps
 
     img = Image.open(path).convert("RGBA")
-    background = Image.new("RGBA", img.size, (255, 255, 255, 255))
-    img = Image.alpha_composite(background, img).convert("L")
+    gray = img.convert("L")
+    alpha = img.split()[3]
+    inverted = ImageOps.invert(gray)
+    opaque = alpha.point(lambda a: 255 if a >= 128 else 0)
+    print_layer = Image.composite(
+        inverted, Image.new("L", img.size, 255), opaque
+    )
 
-    width, height = img.size
+    width, height = print_layer.size
     if width > TICKET_LOGO_MAX_WIDTH:
         scale = TICKET_LOGO_MAX_WIDTH / width
-        img = img.resize(
+        print_layer = print_layer.resize(
             (TICKET_LOGO_MAX_WIDTH, max(1, int(height * scale))),
             Image.Resampling.LANCZOS,
         )
 
-    img = ImageEnhance.Contrast(img).enhance(2.2)
-    img = ImageEnhance.Brightness(img).enhance(0.82)
-    return img.point(lambda pixel: 255 if pixel > TICKET_LOGO_THRESHOLD else 0, mode="1")
+    print_layer = ImageEnhance.Contrast(print_layer).enhance(1.9)
+    # Lower luminance (logo) -> black (0); higher threshold = bolder print
+    return print_layer.point(
+        lambda pixel: 0 if pixel < TICKET_LOGO_THRESHOLD else 255, mode="1"
+    )
 
 
 def format_ticket(printer, from_name: str, question: str) -> bool:
