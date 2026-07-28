@@ -9,6 +9,15 @@ from datetime import datetime
 import logging
 from escpos.printer import Usb, Serial, Network
 import os
+from pathlib import Path
+
+try:
+    from dotenv import load_dotenv
+    load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+except ImportError:
+    pass
+
+from ticket_format import format_ticket
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -44,49 +53,6 @@ def get_printer():
     except Exception as e:
         logger.error(f"Failed to initialize printer: {e}")
         return None
-
-def format_ticket(printer, from_name, question):
-    """Format and print the ticket"""
-    try:
-        now = datetime.now()
-        time_str = now.strftime("%I:%M %p")
-        date_str = now.strftime("%B %d, %Y")
-        
-        # Print ticket format
-        printer.set(align='center', font='a', width=2, height=2, bold=True)
-        printer.text("================================\n")
-        printer.text("TICKET\n")
-        
-        printer.set(align='center', font='a', width=1, height=1, bold=False)
-        printer.text("--------------------------------\n")
-        
-        printer.set(align='left', font='a', width=1, height=1, bold=True)
-        printer.text(f"From: {from_name}\n")
-        
-        printer.set(align='left', font='a', width=1, height=1, bold=False)
-        printer.text(f"Time: {time_str}\n")
-        printer.text(f"Date: {date_str}\n")
-        
-        printer.text("--------------------------------\n")
-        
-        printer.set(align='left', font='a', width=1, height=1, bold=True)
-        printer.text(f"Question/Comment\n")
-        
-        printer.set(align='left', font='a', width=1, height=1, bold=False)
-        printer.text(f"{question}\n")
-        
-        printer.text("--------------------------------\n")
-        
-        printer.set(align='center', font='a', width=2, height=2, bold=True)
-        printer.text("================================\n")
-        
-        printer.text("\n\n")
-        printer.cut()
-        
-        return True
-    except Exception as e:
-        logger.error(f"Error printing ticket: {e}")
-        return False
 
 @app.route('/submit_ticket', methods=['POST'])
 def submit_ticket():
@@ -133,6 +99,8 @@ def health():
         }), 500
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    host = os.getenv('HOST', '0.0.0.0')
+    port = int(os.getenv('PORT', '5000'))
+    app.run(host=host, port=port, debug=False)
 
 
