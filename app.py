@@ -15,7 +15,7 @@ try:
 except ImportError:
     pass
 
-from ticket_format import format_ticket
+from ticket_format import format_ticket, release_printer, print_lock
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -90,12 +90,16 @@ def submit_ticket():
 def health():
     """Health check endpoint"""
     try:
-        printer = get_printer()
-        printer_status = printer is not None
-        return jsonify({
-            'status': 'healthy',
-            'printer_connected': printer_status
-        })
+        with print_lock:
+            printer = get_printer()
+            try:
+                printer_status = printer is not None
+                return jsonify({
+                    'status': 'healthy',
+                    'printer_connected': printer_status
+                })
+            finally:
+                release_printer(printer)
     except Exception as e:
         return jsonify({
             'status': 'unhealthy',
@@ -106,4 +110,6 @@ if __name__ == '__main__':
     DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
     host = os.getenv('HOST', '0.0.0.0')
     port = int(os.getenv('PORT', '5000'))
-    app.run(host=host, port=port, debug=DEBUG)
+    # USB printers fail on the second job if the debug reloader holds a duplicate process.
+    use_reloader = os.getenv('FLASK_USE_RELOADER', 'false').lower() == 'true'
+    app.run(host=host, port=port, debug=DEBUG, use_reloader=use_reloader)

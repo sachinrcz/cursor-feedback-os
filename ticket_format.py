@@ -4,10 +4,15 @@ from __future__ import annotations
 import logging
 import os
 import textwrap
+import threading
+import time
 from datetime import datetime
 from pathlib import Path
 
 logger = logging.getLogger(__name__)
+
+_print_lock = threading.Lock()
+print_lock = _print_lock
 
 BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
@@ -79,12 +84,39 @@ def prepare_logo_image(path: Path, max_width: int, threshold: int, contrast: flo
     )
 
 
+def release_printer(printer) -> None:
+    """Release USB/serial handle so the next job can open the device."""
+    if printer is None:
+        return
+    try:
+        printer.close()
+    except Exception as exc:
+        logger.warning("Could not release printer: %s", exc)
+    # Brief pause so the OS/printer can drop the USB claim before reopening.
+    time.sleep(0.15)
+
+
 def format_ticket(printer, from_name: str, question: str) -> bool:
     """Print ticket matching Cafe Cursor receipt layout."""
     layout = _layout_settings()
     title = layout["title"]
     line_width = layout["line_width"]
 
+    with _print_lock:
+        try:
+            return _format_ticket_body(printer, layout, title, line_width, from_name, question)
+        finally:
+            release_printer(printer)
+
+
+def _format_ticket_body(
+    printer,
+    layout: dict,
+    title: str,
+    line_width: int,
+    from_name: str,
+    question: str,
+) -> bool:
     try:
         now = datetime.now()
         time_str = now.strftime("%I:%M %p")
