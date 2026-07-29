@@ -13,13 +13,26 @@ BASE_DIR = Path(__file__).resolve().parent
 STATIC_DIR = BASE_DIR / "static"
 DEFAULT_LOGO = STATIC_DIR / "cursor-logo.png"
 
-TICKET_TITLE = os.getenv("TICKET_TITLE", "Cafe Cursor Bali")
-TICKET_LINE_WIDTH = int(os.getenv("TICKET_LINE_WIDTH", "32"))
-TICKET_LOGO_MAX_WIDTH = int(os.getenv("TICKET_LOGO_MAX_WIDTH", "280"))
-TICKET_LOGO_THRESHOLD = int(os.getenv("TICKET_LOGO_THRESHOLD", "160"))
+try:
+    from dotenv import load_dotenv
+
+    load_dotenv(BASE_DIR / ".env")
+except ImportError:
+    pass
 
 
-def _rule(width: int = TICKET_LINE_WIDTH) -> str:
+def _layout_settings() -> dict[str, int | str]:
+    """Read ticket layout from environment on each print (respects .env updates after restart)."""
+    return {
+        "title": os.getenv("TICKET_TITLE", "Cafe Cursor Bali").strip(),
+        "line_width": int(os.getenv("TICKET_LINE_WIDTH", "32")),
+        "logo_max_width": int(os.getenv("TICKET_LOGO_MAX_WIDTH", "200")),
+        "logo_threshold": int(os.getenv("TICKET_LOGO_THRESHOLD", "200")),
+        "logo_contrast": float(os.getenv("TICKET_LOGO_CONTRAST", "2.4")),
+    }
+
+
+def _rule(width: int) -> str:
     return "=" * width + "\n"
 
 
@@ -35,7 +48,7 @@ def resolve_logo_path() -> Path | None:
     return legacy if legacy.is_file() else None
 
 
-def prepare_logo_image(path: Path):
+def prepare_logo_image(path: Path, max_width: int, threshold: int, contrast: float):
     """Resize and darken logo for 58mm thermal printers.
 
     cursor-logo.png is light gray on transparency (not black ink). Invert luminance
@@ -53,22 +66,25 @@ def prepare_logo_image(path: Path):
     )
 
     width, height = print_layer.size
-    if width > TICKET_LOGO_MAX_WIDTH:
-        scale = TICKET_LOGO_MAX_WIDTH / width
+    if width > max_width:
+        scale = max_width / width
         print_layer = print_layer.resize(
-            (TICKET_LOGO_MAX_WIDTH, max(1, int(height * scale))),
+            (max_width, max(1, int(height * scale))),
             Image.Resampling.LANCZOS,
         )
 
-    print_layer = ImageEnhance.Contrast(print_layer).enhance(1.9)
-    # Lower luminance (logo) -> black (0); higher threshold = bolder print
+    print_layer = ImageEnhance.Contrast(print_layer).enhance(contrast)
     return print_layer.point(
-        lambda pixel: 0 if pixel < TICKET_LOGO_THRESHOLD else 255, mode="1"
+        lambda pixel: 0 if pixel < threshold else 255, mode="1"
     )
 
 
 def format_ticket(printer, from_name: str, question: str) -> bool:
     """Print ticket matching Cafe Cursor receipt layout."""
+    layout = _layout_settings()
+    title = layout["title"]
+    line_width = layout["line_width"]
+
     try:
         now = datetime.now()
         time_str = now.strftime("%I:%M %p")
@@ -76,14 +92,26 @@ def format_ticket(printer, from_name: str, question: str) -> bool:
         name = (from_name or "").strip() or "Anonymous"
         message = (question or "").strip()
 
+        logger.info(
+            "Ticket layout: title=%r logo_max_width=%s logo_threshold=%s",
+            title,
+            layout["logo_max_width"],
+            layout["logo_threshold"],
+        )
+
         printer.set(align="center", font="a", width=1, height=1, bold=False)
-        printer.text(_rule())
+        printer.text(_rule(line_width))
 
         logo = resolve_logo_path()
         if logo:
             try:
                 printer.image(
-                    prepare_logo_image(logo),
+                    prepare_logo_image(
+                        logo,
+                        layout["logo_max_width"],
+                        layout["logo_threshold"],
+                        layout["logo_contrast"],
+                    ),
                     center=True,
                     impl="bitImageRaster",
                 )
@@ -95,21 +123,21 @@ def format_ticket(printer, from_name: str, question: str) -> bool:
             )
 
         printer.set(align="center", font="a", width=1, height=1, bold=False)
-        printer.text(f"{TICKET_TITLE}\n")
-        printer.text(_rule())
+        printer.text(f"{title}\n")
+        printer.text(_rule(line_width))
 
         printer.set(align="left", font="a", width=1, height=1, bold=False)
         printer.text(f"From: {name}\n")
         printer.text(f"Date: {date_str}\n")
         printer.text(f"Time: {time_str}\n")
-        printer.text(_rule())
+        printer.text(_rule(line_width))
 
         printer.text("Message:\n")
-        wrapped = textwrap.wrap(message, width=TICKET_LINE_WIDTH) or [""]
+        wrapped = textwrap.wrap(message, width=line_width) or [""]
         for line in wrapped:
             printer.text(f"{line}\n")
 
-        printer.text(_rule())
+        printer.text(_rule(line_width))
         printer.text("\n\n")
         printer.cut()
         return True
