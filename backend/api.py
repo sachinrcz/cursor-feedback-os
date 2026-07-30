@@ -18,6 +18,7 @@ except ImportError:
     pass
 
 from ticket_format import format_ticket, release_printer, print_lock
+from ticket_validation import validate_submission
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
@@ -59,11 +60,15 @@ def submit_ticket():
     """Handle ticket submission"""
     try:
         data = request.json
-        from_name = data.get('from_name', 'Anonymous')
+        from_name = data.get('from_name', '')
         question = data.get('question', '')
-        
-        if not question.strip():
-            return jsonify({'success': False, 'error': 'Question/Comment cannot be empty'}), 400
+
+        validation_error = validate_submission(from_name, question)
+        if validation_error:
+            return jsonify({'success': False, 'error': validation_error}), 400
+
+        from_name = from_name.strip()
+        question = question.strip()
         
         printer = get_printer()
         

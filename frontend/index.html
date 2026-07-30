@@ -3,9 +3,22 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ticket Submission</title>
+    <title>Cursor — Feedback</title>
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
     <style>
+        :root {
+            --cursor-bg: #14120b;
+            --cursor-bg-dark: #0f0d06;
+            --cursor-surface: #1c1a12;
+            --cursor-surface-raised: #262318;
+            --cursor-text: #edecec;
+            --cursor-text-muted: rgba(237, 236, 236, 0.55);
+            --cursor-border: rgba(237, 236, 236, 0.12);
+            --cursor-border-emphasis: rgba(237, 236, 236, 0.15);
+            --cursor-accent: #f54e00;
+            --cursor-accent-hover: #ff6a1a;
+        }
+
         * {
             margin: 0;
             padding: 0;
@@ -13,131 +26,184 @@
         }
 
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'San Francisco', sans-serif;
-            background: #ff6b35;
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--cursor-bg);
+            color: var(--cursor-text);
             min-height: 100vh;
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 20px;
+            padding: 24px;
         }
 
         .container {
-            background: #fdf6e3;
-            border-radius: 0;
-            box-shadow: 0 8px 24px rgba(255, 107, 53, 0.2);
-            max-width: 600px;
+            background: var(--cursor-surface);
+            border-radius: 12px;
+            box-shadow: 0 24px 48px rgba(0, 0, 0, 0.45);
+            max-width: 560px;
             width: 100%;
-            padding: 40px;
-            border: 2px solid #ff6b35;
+            padding: 40px 36px;
+            border: 1px solid var(--cursor-border-emphasis);
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 28px;
+        }
+
+        .brand-mark {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border-radius: 10px;
+            background: var(--cursor-accent);
+            color: #fff;
+            font-weight: 700;
+            font-size: 1.25rem;
+            letter-spacing: -0.04em;
+            margin-bottom: 16px;
         }
 
         h1 {
-            color: #000;
+            color: var(--cursor-text);
             text-align: center;
-            margin-bottom: 10px;
-            font-size: 2.5em;
+            margin-bottom: 8px;
+            font-size: 1.75rem;
+            font-weight: 600;
+            letter-spacing: -0.03em;
         }
 
         .subtitle {
             text-align: center;
-            color: #000;
-            margin-bottom: 30px;
-            font-size: 1.1em;
+            color: var(--cursor-text-muted);
+            margin-bottom: 0;
+            font-size: 0.95rem;
+            line-height: 1.5;
         }
 
         .form-group {
-            margin-bottom: 25px;
+            margin-bottom: 22px;
         }
 
         label {
             display: block;
             margin-bottom: 8px;
-            color: #000;
-            font-weight: 600;
-            font-size: 1.1em;
+            color: var(--cursor-text);
+            font-weight: 500;
+            font-size: 0.9rem;
         }
 
         input[type="text"], textarea {
             width: 100%;
-            padding: 15px;
-            border: 2px solid #ff6b35;
-            border-radius: 0;
-            font-size: 1em;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'San Francisco', sans-serif;
-            transition: border-color 0.3s;
-            background: #fdf6e3;
+            padding: 14px 16px;
+            border: 1px solid var(--cursor-border-emphasis);
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+            transition: border-color 0.15s, box-shadow 0.15s;
+            background: var(--cursor-bg-dark);
+            color: var(--cursor-text);
+        }
+
+        input[type="text"]::placeholder, textarea::placeholder {
+            color: var(--cursor-text-muted);
         }
 
         input[type="text"]:focus, textarea:focus {
             outline: none;
-            border-color: #ff6b35;
-            box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.1);
+            border-color: var(--cursor-accent);
+            box-shadow: 0 0 0 3px rgba(245, 78, 0, 0.2);
         }
 
         textarea {
             resize: vertical;
-            min-height: 150px;
+            min-height: 140px;
+        }
+
+        .char-hint {
+            text-align: right;
+            margin-top: 6px;
+            color: var(--cursor-text-muted);
+            font-size: 0.8rem;
         }
 
         .submit-btn {
             width: 100%;
-            padding: 15px;
-            background: #ff6b35;
-            color: white;
-            border: 2px solid #ff6b35;
-            border-radius: 0;
-            font-size: 1.2em;
+            padding: 14px 16px;
+            background: var(--cursor-accent);
+            color: #fff;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
             font-weight: 600;
             cursor: pointer;
-            transition: background 0.2s, box-shadow 0.2s;
-            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'San Francisco', sans-serif;
+            transition: background 0.15s, transform 0.1s;
+            font-family: inherit;
         }
 
         .submit-btn:hover {
-            background: #e55a2b;
-            box-shadow: 0 4px 12px rgba(255, 107, 53, 0.4);
+            background: var(--cursor-accent-hover);
         }
 
         .submit-btn:active {
-            background: #cc4d1f;
+            transform: scale(0.99);
         }
 
         .submit-btn:disabled {
-            background: #ccc;
-            border-color: #ccc;
+            background: var(--cursor-surface-raised);
+            color: var(--cursor-text-muted);
             cursor: not-allowed;
         }
 
         .message {
             margin-top: 20px;
-            padding: 15px;
-            border-radius: 0;
+            padding: 14px 16px;
+            border-radius: 8px;
             text-align: center;
             font-weight: 500;
+            font-size: 0.9rem;
             display: none;
-            border: 2px solid;
+            border: 1px solid var(--cursor-border-emphasis);
         }
 
         .message.success {
-            background: #fdf6e3;
-            color: #000;
-            border-color: #ff6b35;
+            background: rgba(168, 196, 160, 0.12);
+            color: #a8c4a0;
+            border-color: rgba(168, 196, 160, 0.35);
             display: block;
         }
 
         .message.error {
-            background: #fdf6e3;
-            color: #ff6b35;
-            border-color: #ff6b35;
+            background: rgba(196, 160, 160, 0.12);
+            color: #c4a0a0;
+            border-color: rgba(196, 160, 160, 0.35);
             display: block;
         }
 
         .message.info {
-            background: #fdf6e3;
-            color: #000;
-            border-color: #ff6b35;
+            background: var(--cursor-surface-raised);
+            color: var(--cursor-text);
             display: block;
+        }
+
+        .footer-note {
+            margin-top: 28px;
+            text-align: center;
+            font-size: 0.8rem;
+            color: var(--cursor-text-muted);
+        }
+
+        .footer-note a {
+            color: var(--cursor-text);
+            text-decoration: none;
+            border-bottom: 1px solid var(--cursor-border-emphasis);
+        }
+
+        .footer-note a:hover {
+            color: var(--cursor-accent);
+            border-color: var(--cursor-accent);
         }
 
         @keyframes spin {
@@ -147,34 +213,36 @@
 
         .loading {
             display: inline-block;
-            width: 20px;
-            height: 20px;
-            border: 3px solid rgba(255,255,255,.3);
-            border-radius: 0;
+            width: 18px;
+            height: 18px;
+            border: 2px solid rgba(255,255,255,.25);
+            border-radius: 50%;
             border-top-color: #fff;
-            border-right-color: #fff;
-            animation: spin 1s ease-in-out infinite;
-            margin-right: 10px;
+            animation: spin 0.8s linear infinite;
+            margin-right: 8px;
+            vertical-align: middle;
         }
     </style>
 </head>
 <body>
     <div class="container">
-        <h1>Ticket Submission</h1>
-        <p class="subtitle">Send your question or comment to be printed</p>
+        <div class="brand">
+            <div class="brand-mark" aria-hidden="true">C</div>
+            <h1>Cursor</h1>
+            <p class="subtitle">Share a question or comment — we’ll print it for the room.</p>
+        </div>
         
         <form id="ticketForm">
             <div class="form-group">
-                <label for="from_name">Your Name/Username:</label>
-                <input type="text" id="from_name" name="from_name" placeholder="Enter your name" autocomplete="name" required maxlength="100">
+                <label for="from_name">Your Name</label>
+                <input type="text" id="from_name" name="from_name" placeholder="Your name" autocomplete="name" required maxlength="50">
+                <div class="char-hint"><span id="nameCharCount">0</span>/50</div>
             </div>
             
             <div class="form-group">
-                <label for="question">Question/Comment:</label>
-                <textarea id="question" name="question" placeholder="Enter your question or comment here..." required maxlength="1000"></textarea>
-                <div style="text-align: right; margin-top: 4px; color: #000; font-size: 0.9em;">
-                    <span id="charCount">0</span>/1000
-                </div>
+                <label for="question">Question / Comment</label>
+                <textarea id="question" name="question" placeholder="What would you like to ask or share?" required maxlength="500"></textarea>
+                <div class="char-hint"><span id="charCount">0</span>/500</div>
             </div>
             
             <div class="form-group" style="margin-top: 20px;">
@@ -189,13 +257,19 @@
         </form>
         
         <div class="message" id="message"></div>
-        <!-- Optional: Add your attribution here -->
-        <!-- <div style="margin-top: 24px; text-align: center; color: #000;">
-            <a href="YOUR_WEBSITE_URL" target="_blank" rel="noopener noreferrer" style="color: #000; text-decoration: underline;">By YOUR_NAME</a>
-        </div> -->
+        <p class="footer-note">
+            <a href="https://cursorindonesia.com" target="_blank" rel="noopener noreferrer">Cursor Community Indonesia</a>
+        </p>
     </div>
 
     <script>
+        const MAX_NAME_LEN = 50;
+        const MAX_QUESTION_LEN = 500;
+        const EMOJI_RE = /\p{Extended_Pictographic}/u;
+
+        function containsEmoji(text) {
+            return EMOJI_RE.test(text);
+        }
         // Configure reCAPTCHA site key if available via environment variable
         // (Requires build step to inject - otherwise replace YOUR_RECAPTCHA_SITE_KEY above)
         if (window._env && window._env.RECAPTCHA_SITE_KEY) {
@@ -232,10 +306,15 @@
         const form = document.getElementById('ticketForm');
         const messageDiv = document.getElementById('message');
         const submitBtn = document.getElementById('submitBtn');
+        const nameField = document.getElementById('from_name');
         const questionField = document.getElementById('question');
+        const nameCharCount = document.getElementById('nameCharCount');
         const charCount = document.getElementById('charCount');
         
-        // Update character count in real-time
+        nameField.addEventListener('input', () => {
+            nameCharCount.textContent = nameField.value.length;
+        });
+
         questionField.addEventListener('input', () => {
             charCount.textContent = questionField.value.length;
         });
@@ -251,8 +330,13 @@
                 return;
             }
             
-            if (fromName.length > 100) {
-                showMessage('Name must be 100 characters or less.', 'error');
+            if (fromName.length > MAX_NAME_LEN) {
+                showMessage(`Name must be ${MAX_NAME_LEN} characters or less.`, 'error');
+                return;
+            }
+
+            if (containsEmoji(fromName)) {
+                showMessage('Name cannot contain emoji.', 'error');
                 return;
             }
             
@@ -261,8 +345,13 @@
                 return;
             }
             
-            if (question.length > 1000) {
-                showMessage('Message must be 1000 characters or less.', 'error');
+            if (question.length > MAX_QUESTION_LEN) {
+                showMessage(`Message must be ${MAX_QUESTION_LEN} characters or less.`, 'error');
+                return;
+            }
+
+            if (containsEmoji(question)) {
+                showMessage('Message cannot contain emoji.', 'error');
                 return;
             }
             
@@ -303,8 +392,10 @@
                 const data = await response.json();
                 
                 if (data.success) {
-                    showMessage(data.message || 'Ticket printed successfully! ✓', 'success');
+                    showMessage(data.message || 'Ticket printed successfully.', 'success');
                     form.reset();
+                    nameCharCount.textContent = '0';
+                    charCount.textContent = '0';
                     grecaptcha.reset();
                 } else {
                     showMessage('Printer is either off or out of paper. Please contact the administrator to fix it!', 'error');
