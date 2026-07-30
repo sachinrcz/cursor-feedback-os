@@ -1,6 +1,6 @@
-# Contributing to Ticket Printer App
+# Contributing to Cursor Feedback OS
 
-Thank you for your interest in contributing to the Ticket Printer App! This document provides guidelines and instructions for contributing.
+Thank you for your interest in contributing to the Cursor Feedback OS! This document provides guidelines and instructions for contributing.
 
 ## How to Contribute
 
@@ -80,26 +80,30 @@ Feature suggestions are welcome! Please create an issue with:
 ## Project Structure
 
 ```
-ticket-printer-app/
-├── app.py              # Standalone Flask app
+cursor-feedback-os/
+├── app.py                 # Standalone Flask app (UI + API)
 ├── backend/
-│   ├── api.py         # API-only version for Netlify deployments
+│   ├── api.py             # Print API for Netlify + Pi split
 │   └── requirements.txt
 ├── frontend/
-│   └── index.html     # Frontend UI
+│   ├── index.html         # Netlify UI
+│   └── cursor-logo.svg
 ├── netlify/
-│   └── functions/     # Netlify serverless functions
-├── templates/         # Flask templates (for standalone version)
-├── requirements.txt   # Python dependencies
-└── README.md         # Main documentation
+│   └── functions/         # Optional Convex logging
+├── static/                # Assets for Flask / print logo
+├── templates/             # Flask UI template
+├── ticket_format.py
+├── ticket_validation.py
+├── requirements.txt
+└── README.md
 ```
 
 ## Development Setup
 
 1. **Clone the repository**
    ```bash
-   git clone https://github.com/YOUR_USERNAME/ticket-printer-app.git
-   cd ticket-printer-app
+   git clone https://github.com/YOUR_USERNAME/cursor-feedback-os.git
+   cd cursor-feedback-os
    ```
 
 2. **Set up Python environment**

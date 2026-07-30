@@ -8,7 +8,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## [Unreleased]
 
 ### Added
-- Initial open source release
+- Cursor-branded frontend (cursor.com-style dark theme, logo, Cafe Cursor Bali copy)
+- Shared `ticket_validation.py` (name/comment length limits, emoji rejection)
+- `frontend/cursor-logo.svg` and `static/cursor-logo.svg`
+
+### Changed
+- Documentation and paths renamed from legacy **ticket-printer-app** to **cursor-feedback-os**
+- Form labels: **Your Name**, **Comment**
+
+### Added (initial open source)
 - Web-based ticket submission interface
 - Support for USB, Serial, Network, and Bluetooth printer connections
 - reCAPTCHA spam protection
@@ -51,7 +59,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ## Release Notes
 
 ### Version 1.0.0
-Initial release of the Ticket Printer Application. Supports basic ticket printing with a web interface on Raspberry Pi, with optional Netlify frontend deployment.
+Initial release of the Cursor Feedback OS. Supports basic ticket printing with a web interface on Raspberry Pi, with optional Netlify frontend deployment.
 
 ---
 

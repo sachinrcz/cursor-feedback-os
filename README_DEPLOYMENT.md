@@ -1,6 +1,6 @@
 # 🚀 Quick Deployment Guide
 
-This guide will help you deploy the ticket printer app in 3 simple methods.
+This guide will help you deploy the Cursor Feedback OS in 3 simple methods.
 
 ## Method 1: Automated Deployment (Easiest)
 
@@ -22,13 +22,13 @@ This will guide you through the deployment process.
 # 1. Transfer files to Raspberry Pi (choose one):
 #    A. Via USB drive - copy folder to USB, insert into Pi
 #    B. Via SCP:
-scp -r . pi@raspberrypi.local:/home/pi/ticket-printer-app
+scp -r . pi@raspberrypi.local:/home/pi/cursor-feedback-os
 
 # 2. SSH into Raspberry Pi
 ssh pi@raspberrypi.local
 
 # 3. Navigate to folder
-cd ~/ticket-printer-app
+cd ~/cursor-feedback-os
 
 # 4. Run setup
 chmod +x setup.sh

@@ -1,14 +1,26 @@
-# Ticket Printer Application
+# cursor-feedback-os
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-A web-based ticket submission system that automatically prints tickets on ESC/POS thermal printers connected to a Raspberry Pi. Users can submit tickets through a simple web interface, which are then automatically printed with timestamps and formatted output.
+**cursor-feedback-os** is a web-based feedback system for events (e.g. Cafe Cursor Bali): guests submit a name and comment in a Cursor-styled form, and a Raspberry Pi prints each submission on a 58mm ESC/POS thermal printer with a timestamp and optional logo.
 
 Perfect for:
-- Q&A sessions and feedback collection at events
-- Anonymous comment boards
-- Interactive installations
-- Physical message boards
+- Cursor meetups and community events
+- Q&A and feedback at workshops
+- Interactive installations and physical message boards
+
+## Repository layout
+
+```
+cursor-feedback-os/
+├── frontend/           # Static UI (Netlify publish directory)
+├── templates/          # Flask template when running app.py locally
+├── backend/            # Print API for split Netlify + Pi deployment
+├── static/             # Shared assets (e.g. cursor-logo.svg)
+├── ticket_format.py    # Thermal print layout
+├── ticket_validation.py # Shared name/comment limits and emoji rules
+└── netlify/functions/  # Optional Convex logging
+```
 
 ## Things to Buy (Affiliate links)
 
@@ -36,12 +48,13 @@ The system is designed to be flexible and easy to deploy. You can run everything
 
 ## Features
 
-- 📝 Simple web interface for ticket submission
-- 🖨️ Automatic printing on Netum 58mm thermal printer
-- ⏰ Timestamp and date stamping
-- 💾 Logged submissions (optional Convex database integration)
-- 🌐 Accessible from any device on your network
-- 🔒 Built-in reCAPTCHA spam protection
+- Cursor-branded web UI (dark theme, official logo)
+- Name + comment form with character limits and no emoji
+- Automatic printing on Netum 58mm thermal printer
+- Timestamp and date on each print (configurable title via `TICKET_TITLE`, default Cafe Cursor Bali)
+- Optional Convex logging via Netlify function
+- reCAPTCHA on the Netlify frontend
+- Accessible from any device when frontend and API are deployed
 
 ## Quick Start
 
@@ -59,9 +72,16 @@ Before starting, you'll need to configure the following:
    - Get your key from [Google reCAPTCHA Admin](https://www.google.com/recaptcha/admin)
    - Or set via Netlify environment variable `RECAPTCHA_SITE_KEY`
 
-2. **API URL** - Replace `YOUR_API_URL_HERE` in `frontend/index.html` (line 217)
-   - Set this to your ngrok, Cloudflare tunnel, or direct Raspberry Pi URL
-   - Example: `https://abc123.ngrok.io` or `https://your-tunnel.trycloudflare.com`
+2. **API URL** - Replace `YOUR_API_URL_HERE` in `frontend/index.html`
+   - Public HTTPS URL for `backend/api.py` (ngrok, Cloudflare Tunnel, or `api.yourdomain.com`)
+   - Example: `https://api.example.com` (no trailing slash)
+   - The frontend calls `POST ${API_URL}/submit_ticket`
+
+### Custom domain
+
+- **Form:** Add your domain in Netlify (Site settings → Domain management).
+- **Print API:** Expose the Pi with Cloudflare Tunnel or similar; point `productionApiUrl` in `frontend/index.html` at that host.
+- See [README_NETLIFY.md](README_NETLIFY.md) and [GITHUB_DEPLOYMENT.md](GITHUB_DEPLOYMENT.md) for full steps.
 
 ### Optional Configuration
 
@@ -162,14 +182,14 @@ Add the following content:
 
 ```ini
 [Unit]
-Description=Ticket Printer Application
+Description=Cursor Feedback OS
 After=network.target
 
 [Service]
 Type=simple
 User=pi
-WorkingDirectory=/home/pi/ticket-printer-app
-ExecStart=/usr/bin/python3 /home/pi/ticket-printer-app/app.py
+WorkingDirectory=/home/pi/cursor-feedback-os
+ExecStart=/usr/bin/python3 /home/pi/cursor-feedback-os/app.py
 Restart=always
 
 [Install]
@@ -187,29 +207,15 @@ sudo systemctl status ticket-printer
 
 ## Usage
 
-1. Open a web browser and navigate to `http://[YOUR_PI_IP]:5000`
-2. Enter your name (optional)
-3. Enter your question or comment
-4. Click "Print Ticket"
-5. The ticket will automatically print with the specified format
+1. Open the web form (Netlify URL, custom domain, or `http://[PI_IP]:5000` for local `app.py`).
+2. Enter **Your Name** (required, max 50 characters).
+3. Enter **Comment** (required, max 500 characters, no emoji).
+4. Complete reCAPTCHA when using the Netlify frontend.
+5. Click **Print Ticket** — the Pi prints the submission.
 
-## Ticket Format
+## Ticket format
 
-The tickets are printed in this format:
-
-```
-================================
-TICKET
---------------------------------
-From: [Name]
-Time: [Current Time]
-Date: [Current Date]
---------------------------------
-Question/Comment
-[Your message]
---------------------------------
-================================
-```
+Printed layout is defined in `ticket_format.py`. Default title is **Cafe Cursor Bali** (`TICKET_TITLE` in `.env`). Typical output includes logo (if `static/cursor-logo.png` is present), name, time, date, and comment text wrapped for 58mm paper.
 
 ## Troubleshooting
 
@@ -252,10 +258,22 @@ sudo journalctl -u ticket-printer -f
 
 ## API Endpoints
 
-- `GET /` - Web interface
-- `POST /submit_ticket` - Submit a ticket to print
-  - Body: `{"from_name": "John Doe", "question": "Your question here"}`
-- `GET /health` - Health check endpoint
+Used by `backend/api.py` (and `app.py` when running all-in-one):
+
+- `GET /` - Web interface (`app.py` only; Netlify serves `frontend/` instead)
+- `POST /submit_ticket` - Print a submission
+  - Body: `{"from_name": "Jane", "question": "Comment text"}`
+  - `question` is the comment field; validation matches the web form (`ticket_validation.py`).
+- `GET /health` - Health check (`printer_connected`, etc.)
+
+Example:
+
+```bash
+curl -s https://YOUR-API-HOST/health
+curl -X POST https://YOUR-API-HOST/submit_ticket \
+  -H "Content-Type: application/json" \
+  -d '{"from_name":"Jane","question":"Great session today"}'
+```
 
 ## Requirements
 

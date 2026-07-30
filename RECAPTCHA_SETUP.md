@@ -6,7 +6,7 @@
 2. Sign in with your Google account
 3. Click "Create"
 4. Fill out the form:
-   - **Label**: Ticket Printer (or any name you choose)
+   - **Label**: Cursor Feedback OS / Cafe Cursor Bali (or any name you choose)
    - **reCAPTCHA type**: Select "reCAPTCHA v2" → "I'm not a robot" Checkbox
    - **Domains**: Add:
      - `your-site-name.netlify.app` (your Netlify site)

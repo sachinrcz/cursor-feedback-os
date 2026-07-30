@@ -1,6 +1,6 @@
-# Deploy to Netlify via GitHub
+# Deploy cursor-feedback-os to Netlify via GitHub
 
-This guide will help you deploy the frontend to Netlify and connect it to your Raspberry Pi backend.
+This guide deploys the **cursor-feedback-os** frontend to Netlify and connects it to the Raspberry Pi print API.
 
 ## Architecture
 
@@ -20,10 +20,10 @@ git init
 
 # Add all files (except those in .gitignore)
 git add .
-git commit -m "Initial commit - Ticket printer app"
+git commit -m "Initial commit - Cursor Feedback OS"
 
 # Create a repository on GitHub, then:
-git remote add origin https://github.com/YOUR_USERNAME/ticket-printer-app.git
+git remote add origin https://github.com/YOUR_USERNAME/cursor-feedback-os.git
 git branch -M main
 git push -u origin main
 ```
@@ -97,8 +97,8 @@ netlify deploy --prod --dir=frontend
 ssh pi@raspberrypi.local
 
 # Clone the repository (or upload files)
-git clone https://github.com/YOUR_USERNAME/ticket-printer-app.git
-cd ticket-printer-app/backend
+git clone https://github.com/YOUR_USERNAME/cursor-feedback-os.git
+cd cursor-feedback-os/backend
 
 # Install dependencies
 pip3 install -r requirements.txt

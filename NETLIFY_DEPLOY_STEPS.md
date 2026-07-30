@@ -1,11 +1,11 @@
 # Netlify Deployment Steps
 
 ## Your Repository
-✅ GitHub: https://github.com/YOUR_USERNAME/ticket-printer-app
+✅ GitHub: https://github.com/YOUR_USERNAME/cursor-feedback-os
 
 ## Deployment Settings
 
-**Site name:** (choose any name, e.g., `ticket-printer-app`)
+**Site name:** (choose any name, e.g., `cursor-feedback-os`)
 
 **Build settings:**
 - **Base directory:** (leave blank)

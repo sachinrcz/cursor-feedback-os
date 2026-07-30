@@ -1,6 +1,6 @@
-# Quick Start: Deploy to Netlify
+# Quick Start: cursor-feedback-os on Netlify
 
-This guide will get your ticket printer app deployed to Netlify via GitHub in under 10 minutes.
+This guide will get **cursor-feedback-os** deployed to Netlify via GitHub in under 10 minutes.
 
 ## 🚀 Quick Deploy Steps
 
@@ -13,7 +13,7 @@ git add .
 git commit -m "Initial commit"
 
 # Push to GitHub (create repo first on GitHub.com)
-git remote add origin https://github.com/YOUR_USERNAME/ticket-printer-app.git
+git remote add origin https://github.com/YOUR_USERNAME/cursor-feedback-os.git
 git branch -M main
 git push -u origin main
 ```
@@ -36,8 +36,8 @@ git push -u origin main
 ssh pi@raspberrypi.local
 
 # Clone the repo
-git clone https://github.com/YOUR_USERNAME/ticket-printer-app.git
-cd ticket-printer-app/backend
+git clone https://github.com/YOUR_USERNAME/cursor-feedback-os.git
+cd cursor-feedback-os/backend
 
 # Install dependencies
 pip3 install -r requirements.txt
@@ -100,15 +100,16 @@ Or set Netlify environment variable:
 ## 📁 Project Structure
 
 ```
-ticket-printer-app/
+cursor-feedback-os/
 ├── frontend/          # Static HTML for Netlify
-│   └── index.html
+│   ├── index.html
+│   └── cursor-logo.svg
 ├── backend/           # Flask API for Raspberry Pi
 │   ├── api.py
 │   └── requirements.txt
-├── app.py            # Original full-stack version
-├── netlify.toml      # Netlify config
-└── GITHUB_DEPLOYMENT.md  # Detailed guide
+├── app.py             # All-in-one Flask app (UI + print API)
+├── netlify.toml       # Netlify config (publish: frontend)
+└── GITHUB_DEPLOYMENT.md
 ```
 
 ## 🔧 Configuration

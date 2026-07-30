@@ -1,6 +1,6 @@
-# Deployment Guide for Ticket Printer App
+# Deployment Guide — cursor-feedback-os
 
-This guide covers multiple deployment options for your ticket printer application.
+This guide covers deployment options for **cursor-feedback-os** (Netlify frontend + Pi print API, or all-in-one on the Pi).
 
 ## Quick Deployment Options
 
@@ -19,28 +19,28 @@ Choose one of these methods:
 ```bash
 # On your Mac:
 # 1. Copy the entire folder to a USB drive
-cp -r /path/to/ticket-printer-app /Volumes/YOUR_USB_NAME/
+cp -r /path/to/cursor-feedback-os /Volumes/YOUR_USB_NAME/
 
 # 2. Insert USB into Raspberry Pi
 # 3. On the Pi, copy files to home directory:
-cp -r /media/pi/*/ticket-printer-app ~/
-cd ~/ticket-printer-app
+cp -r /media/pi/*/cursor-feedback-os ~/
+cd ~/cursor-feedback-os
 ```
 
 **Method B: Using SCP (Network Transfer)**
 ```bash
 # On your Mac, from the project directory:
-scp -r /path/to/ticket-printer-app pi@raspberrypi.local:/home/pi/
+scp -r /path/to/cursor-feedback-os pi@raspberrypi.local:/home/pi/
 
 # Then SSH into the Pi:
 ssh pi@raspberrypi.local
-cd ~/ticket-printer-app
+cd ~/cursor-feedback-os
 ```
 
 **Method C: Using Git**
 ```bash
 # On your Mac:
-cd /path/to/ticket-printer-app
+cd /path/to/cursor-feedback-os
 git init
 git add .
 git commit -m "Initial commit"
@@ -50,14 +50,14 @@ git push -u origin main
 
 # On Raspberry Pi:
 git clone YOUR_GITHUB_URL
-cd ticket-printer
+cd cursor-feedback-os
 ```
 
 #### Step 2: Run Setup Script
 
 ```bash
 # Make sure you're in the project directory
-cd ~/ticket-printer-app
+cd ~/cursor-feedback-os
 
 # Make the setup script executable
 chmod +x setup.sh
@@ -293,7 +293,7 @@ sudo systemctl status ticket-printer
 sudo journalctl -u ticket-printer -n 50
 
 # Try running manually to see errors
-cd ~/ticket-printer-app
+cd ~/cursor-feedback-os
 python3 app.py
 ```
 
@@ -359,7 +359,7 @@ sudo systemctl stop ticket-printer
 git pull
 
 # Or update files manually
-# Copy new files to ~/ticket-printer-app/
+# Copy new files to ~/cursor-feedback-os/
 
 # Install new dependencies (if any)
 pip3 install -r requirements.txt

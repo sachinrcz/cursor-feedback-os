@@ -17,7 +17,7 @@ npm install -g convex
 
 ### Step 2: Create Convex Project
 
-In a new directory (not your ticket-printer-app), run:
+In a new directory (not your cursor-feedback-os), run:
 
 ```bash
 mkdir convex-project
@@ -26,7 +26,7 @@ convex init
 ```
 
 It will ask:
-- **Choose a project name**: ticket-printer (or whatever you want)
+- **Choose a project name**: cursor-feedback-os (or whatever you want)
 - **Select region**: pick closest to you
 - **Do you want to deploy your dev to a live URL?**: Yes
 
