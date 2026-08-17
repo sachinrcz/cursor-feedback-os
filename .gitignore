@@ -41,6 +41,8 @@ Desktop.ini
 ngrok
 cloudflared
 *.tar.gz
+data/credits.sqlite
+data/credits.sqlite-*
 
 # Backup files
 *.bak

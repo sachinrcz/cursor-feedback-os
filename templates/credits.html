@@ -1,0 +1,456 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cursor — Credit Desk</title>
+    <script src="https://unpkg.com/html5-qrcode@2.3.8/html5-qrcode.min.js"></script>
+    <style>
+        :root {
+            --color-theme-bg: #14120b;
+            --color-theme-fg: #edecec;
+            --color-theme-card: #1b1913;
+            --color-theme-card-input: #1d1b15;
+            --color-theme-text-sec: rgba(237, 236, 236, 0.6);
+            --color-theme-text-tertiary: rgba(237, 236, 236, 0.4);
+            --color-theme-border-02: rgba(237, 236, 236, 0.1);
+            --color-theme-border-03: rgba(237, 236, 236, 0.6);
+            --color-success: #7ee787;
+            --color-error: #ff7b72;
+            --color-warn: #f2cc60;
+            --radius-md: 8px;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+            background: var(--color-theme-bg);
+            color: var(--color-theme-fg);
+            min-height: 100vh;
+            padding: 20px;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        .layout {
+            max-width: 720px;
+            margin: 0 auto;
+            display: grid;
+            gap: 16px;
+        }
+
+        .card {
+            background: var(--color-theme-card);
+            border: 1px solid var(--color-theme-border-02);
+            border-radius: var(--radius-md);
+            padding: 24px;
+        }
+
+        .brand {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .brand h1 {
+            font-size: 1.25rem;
+            font-weight: 600;
+            letter-spacing: -0.02em;
+        }
+
+        .brand p {
+            color: var(--color-theme-text-sec);
+            font-size: 0.875rem;
+            margin-top: 6px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        input[type="text"], input[type="password"], textarea {
+            width: 100%;
+            padding: 12px 14px;
+            border: 1px solid var(--color-theme-border-02);
+            border-radius: var(--radius-md);
+            background: var(--color-theme-card-input);
+            color: var(--color-theme-fg);
+            font-size: 1rem;
+            font-family: inherit;
+        }
+
+        input:focus, textarea:focus {
+            outline: none;
+            border-color: var(--color-theme-border-03);
+            box-shadow: 0 0 0 1px var(--color-theme-border-03);
+        }
+
+        textarea {
+            min-height: 120px;
+            resize: vertical;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            font-size: 0.8125rem;
+        }
+
+        .btn {
+            width: 100%;
+            padding: 12px 16px;
+            border: none;
+            border-radius: var(--radius-md);
+            background: var(--color-theme-fg);
+            color: var(--color-theme-bg);
+            font-size: 0.9375rem;
+            font-weight: 600;
+            cursor: pointer;
+            margin-top: 12px;
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--color-theme-fg);
+            border: 1px solid var(--color-theme-border-02);
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 12px;
+        }
+
+        .stat {
+            background: var(--color-theme-card-input);
+            border-radius: var(--radius-md);
+            padding: 14px;
+            text-align: center;
+        }
+
+        .stat-value {
+            font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            color: var(--color-theme-text-sec);
+            margin-top: 4px;
+        }
+
+        .message {
+            display: none;
+            margin-top: 14px;
+            padding: 12px 14px;
+            border-radius: var(--radius-md);
+            font-size: 0.875rem;
+        }
+
+        .message.show { display: block; }
+        .message.success { background: rgba(126, 231, 135, 0.12); color: var(--color-success); }
+        .message.error { background: rgba(255, 123, 114, 0.12); color: var(--color-error); }
+        .message.info { background: rgba(242, 204, 96, 0.12); color: var(--color-warn); }
+
+        #reader {
+            width: 100%;
+            border-radius: var(--radius-md);
+            overflow: hidden;
+            background: #000;
+            min-height: 240px;
+        }
+
+        #reader video {
+            border-radius: var(--radius-md);
+        }
+
+        .recent-list {
+            list-style: none;
+            margin-top: 12px;
+        }
+
+        .recent-list li {
+            padding: 10px 0;
+            border-bottom: 1px solid var(--color-theme-border-02);
+            font-size: 0.875rem;
+        }
+
+        .recent-list li:last-child { border-bottom: none; }
+
+        .recent-name { font-weight: 600; }
+        .recent-meta { color: var(--color-theme-text-sec); font-size: 0.75rem; margin-top: 2px; }
+
+        .hidden { display: none !important; }
+
+        .section-title {
+            font-size: 0.9375rem;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        details summary {
+            cursor: pointer;
+            color: var(--color-theme-text-sec);
+            font-size: 0.875rem;
+            margin-bottom: 12px;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr auto;
+            gap: 8px;
+            align-items: end;
+        }
+
+        .form-row .btn { margin-top: 0; width: auto; min-width: 100px; }
+    </style>
+</head>
+<body>
+    <div class="layout">
+        <div id="pinGate" class="card {% if not pin_required %}hidden{% endif %}">
+            <div class="brand">
+                <h1>Credit Desk</h1>
+                <p>Enter staff PIN to unlock</p>
+            </div>
+            <label for="pinInput">PIN</label>
+            <input type="password" id="pinInput" autocomplete="off" inputmode="numeric">
+            <button class="btn" id="unlockBtn">Unlock</button>
+            <div class="message" id="pinMessage"></div>
+        </div>
+
+        <div id="desk" class="{% if pin_required %}hidden{% endif %}">
+            <div class="card">
+                <div class="brand">
+                    <h1>Credit Desk</h1>
+                    <p>Scan a Luma ticket to print a Cursor credit QR</p>
+                </div>
+                <div class="stats">
+                    <div class="stat">
+                        <div class="stat-value" id="statAvailable">—</div>
+                        <div class="stat-label">Remaining</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statClaimed">—</div>
+                        <div class="stat-label">Issued</div>
+                    </div>
+                    <div class="stat">
+                        <div class="stat-value" id="statTotal">—</div>
+                        <div class="stat-label">Total pool</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Scan Luma ticket</div>
+                <div id="reader"></div>
+                <div class="message" id="scanMessage"></div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Email lookup</div>
+                <p style="color: var(--color-theme-text-sec); font-size: 0.8125rem; margin-bottom: 12px;">
+                    If the guest cannot show their QR, look them up by the email they used on Luma.
+                </p>
+                <div class="form-row">
+                    <div>
+                        <label for="emailInput">Email</label>
+                        <input type="text" id="emailInput" placeholder="guest@example.com" autocomplete="off">
+                    </div>
+                    <button class="btn" id="emailBtn">Print</button>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="section-title">Recently issued</div>
+                <ul class="recent-list" id="recentList">
+                    <li style="color: var(--color-theme-text-sec);">No credits issued yet.</li>
+                </ul>
+            </div>
+
+            <div class="card">
+                <details>
+                    <summary>Import credit links (staff)</summary>
+                    <label for="importUrls">One unique redeem URL per line</label>
+                    <textarea id="importUrls" placeholder="https://cursor.com/redeem/..."></textarea>
+                    <button class="btn btn-secondary" id="importBtn">Import links</button>
+                    <div class="message" id="importMessage"></div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const pinRequired = {{ pin_required | tojson }};
+        let scanner = null;
+        let processing = false;
+        let lastScan = '';
+
+        function showMessage(el, text, type) {
+            el.textContent = text;
+            el.className = 'message show ' + type;
+        }
+
+        function hideMessage(el) {
+            el.className = 'message';
+            el.textContent = '';
+        }
+
+        async function api(path, options = {}) {
+            const response = await fetch(path, {
+                headers: { 'Content-Type': 'application/json', ...(options.headers || {}) },
+                credentials: 'same-origin',
+                ...options,
+            });
+            const data = await response.json().catch(() => ({}));
+            if (!response.ok) {
+                throw new Error(data.error || 'Request failed');
+            }
+            return data;
+        }
+
+        function updateStats(data) {
+            document.getElementById('statAvailable').textContent = data.available ?? '—';
+            document.getElementById('statClaimed').textContent = data.claimed ?? '—';
+            document.getElementById('statTotal').textContent = data.total ?? '—';
+
+            const list = document.getElementById('recentList');
+            const recent = data.recent || [];
+            if (!recent.length) {
+                list.innerHTML = '<li style="color: var(--color-theme-text-sec);">No credits issued yet.</li>';
+                return;
+            }
+            list.innerHTML = recent.map(item => {
+                const when = item.claimed_at ? new Date(item.claimed_at).toLocaleString() : '';
+                const email = item.guest_email ? ` · ${item.guest_email}` : '';
+                return `<li><div class="recent-name">${escapeHtml(item.guest_name)}</div><div class="recent-meta">${escapeHtml(when)}${escapeHtml(email)}</div></li>`;
+            }).join('');
+        }
+
+        function escapeHtml(text) {
+            const div = document.createElement('div');
+            div.textContent = text || '';
+            return div.innerHTML;
+        }
+
+        async function refreshStatus() {
+            const data = await api('/credits/status');
+            updateStats(data);
+        }
+
+        async function issueCredit(payload) {
+            const scanMessage = document.getElementById('scanMessage');
+            hideMessage(scanMessage);
+            const data = await api('/credits/issue', {
+                method: 'POST',
+                body: JSON.stringify(payload),
+            });
+
+            const verb = data.action === 'reprinted' || data.already_claimed ? 'Reprinted for' : 'Printed for';
+            showMessage(scanMessage, `${verb} ${data.guest_name}`, data.already_claimed ? 'info' : 'success');
+            updateStats(data);
+        }
+
+        async function handleScan(decodedText) {
+            if (processing) return;
+            if (decodedText === lastScan) return;
+            processing = true;
+            lastScan = decodedText;
+
+            try {
+                await issueCredit({ scanned_url: decodedText });
+            } catch (err) {
+                showMessage(document.getElementById('scanMessage'), err.message, 'error');
+            } finally {
+                processing = false;
+                setTimeout(() => { lastScan = ''; }, 3000);
+            }
+        }
+
+        async function startScanner() {
+            if (!window.Html5Qrcode) return;
+            if (scanner) return;
+
+            scanner = new Html5Qrcode('reader');
+            const cameras = await Html5Qrcode.getCameras();
+            if (!cameras.length) {
+                showMessage(document.getElementById('scanMessage'), 'No camera found on this device.', 'error');
+                return;
+            }
+
+            const backCamera = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
+            await scanner.start(
+                backCamera.id,
+                { fps: 10, qrbox: { width: 260, height: 260 } },
+                handleScan,
+                () => {}
+            );
+        }
+
+        async function unlockDesk() {
+            const pin = document.getElementById('pinInput').value.trim();
+            const pinMessage = document.getElementById('pinMessage');
+            try {
+                await api('/credits/unlock', { method: 'POST', body: JSON.stringify({ pin }) });
+                document.getElementById('pinGate').classList.add('hidden');
+                document.getElementById('desk').classList.remove('hidden');
+                await refreshStatus();
+                await startScanner();
+            } catch (err) {
+                showMessage(pinMessage, err.message, 'error');
+            }
+        }
+
+        document.getElementById('unlockBtn')?.addEventListener('click', unlockDesk);
+        document.getElementById('pinInput')?.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') unlockDesk();
+        });
+
+        document.getElementById('emailBtn').addEventListener('click', async () => {
+            const email = document.getElementById('emailInput').value.trim();
+            const scanMessage = document.getElementById('scanMessage');
+            if (!email) {
+                showMessage(scanMessage, 'Enter an email address.', 'error');
+                return;
+            }
+            try {
+                await issueCredit({ email });
+                document.getElementById('emailInput').value = '';
+            } catch (err) {
+                showMessage(scanMessage, err.message, 'error');
+            }
+        });
+
+        document.getElementById('importBtn').addEventListener('click', async () => {
+            const urls = document.getElementById('importUrls').value;
+            const importMessage = document.getElementById('importMessage');
+            try {
+                const data = await api('/credits/import', {
+                    method: 'POST',
+                    body: JSON.stringify({ urls }),
+                });
+                showMessage(importMessage, `Added ${data.added}, skipped ${data.skipped}. ${data.available} remaining.`, 'success');
+                document.getElementById('importUrls').value = '';
+                await refreshStatus();
+            } catch (err) {
+                showMessage(importMessage, err.message, 'error');
+            }
+        });
+
+        async function boot() {
+            if (!pinRequired) {
+                try {
+                    await refreshStatus();
+                    await startScanner();
+                } catch (err) {
+                    showMessage(document.getElementById('scanMessage'), err.message, 'error');
+                }
+            }
+        }
+
+        boot();
+    </script>
+</body>
+</html>

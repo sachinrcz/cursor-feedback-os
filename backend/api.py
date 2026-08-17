@@ -3,29 +3,36 @@
 Ticket Printing API for Raspberry Pi
 This API connects to the physical printer and should be hosted on the device with the printer.
 """
-from flask import Flask, request, jsonify
-from flask_cors import CORS
-from datetime import datetime
 import logging
-from escpos.printer import Usb, Serial, Network
 import os
+import sys
 from pathlib import Path
+
+ROOT_DIR = Path(__file__).resolve().parent.parent
+if str(ROOT_DIR) not in sys.path:
+    sys.path.insert(0, str(ROOT_DIR))
+
+from flask import Flask, jsonify, request
+from flask_cors import CORS
+from escpos.printer import Usb, Serial, Network
 
 try:
     from dotenv import load_dotenv
-    load_dotenv(Path(__file__).resolve().parent.parent / '.env')
+    load_dotenv(ROOT_DIR / '.env')
 except ImportError:
     pass
 
 from ticket_format import format_ticket, release_printer, print_lock
 from ticket_validation import validate_submission
+from credit_routes import create_credit_blueprint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-app = Flask(__name__)
-CORS(app)  # Enable CORS for frontend on different domain
+app = Flask(__name__, template_folder=str(ROOT_DIR / "templates"))
+app.secret_key = os.getenv("SECRET_KEY", os.getenv("CREDITS_PIN", "cursor-feedback-os"))
+CORS(app, supports_credentials=True)  # Enable CORS for frontend on different domain
 
 # Configuration
 PRINTER_TYPE = os.getenv('PRINTER_TYPE', 'usb')  # 'usb', 'serial', 'network', or 'bluetooth'
@@ -54,6 +61,8 @@ def get_printer():
     except Exception as e:
         logger.error(f"Failed to initialize printer: {e}")
         return None
+
+app.register_blueprint(create_credit_blueprint(get_printer))
 
 @app.route('/submit_ticket', methods=['POST'])
 def submit_ticket():

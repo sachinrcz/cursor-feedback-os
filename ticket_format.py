@@ -176,3 +176,83 @@ def _format_ticket_body(
     except Exception as exc:
         logger.error("Error printing ticket: %s", exc)
         return False
+
+
+def format_credit_ticket(printer, guest_name: str, credit_url: str) -> bool:
+    """Print a Cursor credit slip with a QR code for the redeem URL."""
+    layout = _layout_settings()
+    title = layout["title"]
+    line_width = layout["line_width"]
+    label = os.getenv("CREDITS_TICKET_LABEL", "Cursor credit").strip() or "Cursor credit"
+
+    with _print_lock:
+        try:
+            return _format_credit_ticket_body(
+                printer, layout, title, line_width, label, guest_name, credit_url
+            )
+        finally:
+            release_printer(printer)
+
+
+def _format_credit_ticket_body(
+    printer,
+    layout: dict,
+    title: str,
+    line_width: int,
+    label: str,
+    guest_name: str,
+    credit_url: str,
+) -> bool:
+    try:
+        now = datetime.now()
+        time_str = now.strftime("%I:%M %p")
+        date_str = now.strftime("%B %d, %Y")
+        name = (guest_name or "").strip() or "Guest"
+        url = (credit_url or "").strip()
+        if not url:
+            raise ValueError("Credit URL is required.")
+
+        printer.set(align="center", font="a", width=1, height=1, bold=False)
+        printer.text(_rule(line_width))
+
+        logo = resolve_logo_path()
+        if logo:
+            try:
+                printer.image(
+                    prepare_logo_image(
+                        logo,
+                        layout["logo_max_width"],
+                        layout["logo_threshold"],
+                        layout["logo_contrast"],
+                    ),
+                    center=True,
+                    impl="bitImageRaster",
+                )
+            except Exception as exc:
+                logger.warning("Could not print logo (%s): %s", logo, exc)
+
+        printer.set(align="center", font="a", width=1, height=1, bold=False)
+        printer.text(f"{title}\n")
+        printer.text(_rule(line_width))
+
+        printer.set(align="left", font="a", width=1, height=1, bold=False)
+        printer.text(f"Guest: {name}\n")
+        printer.text(f"{label}\n")
+        printer.text(f"Date: {date_str}\n")
+        printer.text(f"Time: {time_str}\n")
+        printer.text(_rule(line_width))
+
+        printer.set(align="center", font="a", width=1, height=1, bold=False)
+        printer.text("Scan to redeem\n\n")
+        printer.qr(url, size=6, native=True, center=True)
+        printer.text("\n")
+
+        suffix = url[-4:] if len(url) >= 4 else url
+        printer.text(f"Ref: ...{suffix}\n")
+        printer.text(_rule(line_width))
+        printer.text("\n\n")
+        printer.cut()
+        return True
+    except Exception as exc:
+        logger.error("Error printing credit ticket: %s", exc)
+        return False

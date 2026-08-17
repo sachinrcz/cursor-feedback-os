@@ -17,12 +17,14 @@ except ImportError:
 
 from ticket_format import format_ticket, release_printer, print_lock
 from ticket_validation import validate_submission
+from credit_routes import create_credit_blueprint
 
 # Configure logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
 app = Flask(__name__)
+app.secret_key = os.getenv("SECRET_KEY", os.getenv("CREDITS_PIN", "cursor-feedback-os"))
 
 # Configuration
 PRINTER_TYPE = os.getenv('PRINTER_TYPE', 'usb')  # 'usb', 'serial', 'network', or 'bluetooth'
@@ -53,6 +55,8 @@ def get_printer():
         logger.error(f"Failed to initialize printer: {e}")
         logger.error(f"Try running: sudo rfcomm bind /dev/rfcomm0 [PRINTER_MAC_ADDRESS]")
         return None
+
+app.register_blueprint(create_credit_blueprint(get_printer))
 
 @app.route('/')
 def index():
