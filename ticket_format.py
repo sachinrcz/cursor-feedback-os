@@ -244,7 +244,7 @@ def _format_credit_ticket_body(
 
         printer.set(align="center", font="a", width=1, height=1, bold=False)
         printer.text("Scan to redeem\n\n")
-        printer.qr(url, size=6, native=True, center=True)
+        printer.qr(url, size=6, native=True)
         printer.text("\n")
 
         suffix = url[-4:] if len(url) >= 4 else url
