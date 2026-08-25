@@ -206,6 +206,18 @@
         }
 
         .form-row .btn { margin-top: 0; width: auto; min-width: 100px; }
+
+        .scanner-actions {
+            display: grid;
+            gap: 10px;
+            margin-bottom: 12px;
+        }
+
+        .scanner-hint {
+            color: var(--color-theme-text-sec);
+            font-size: 0.8125rem;
+            line-height: 1.45;
+        }
     </style>
 </head>
 <body>
@@ -245,8 +257,22 @@
 
             <div class="card">
                 <div class="section-title">Scan Luma ticket</div>
+                <div class="scanner-actions">
+                    <button class="btn" type="button" id="startCameraBtn">Start camera</button>
+                    <p class="scanner-hint" id="scannerHint">
+                        Tap Start camera and allow access when prompted. If the camera does not work over HTTP,
+                        paste the ticket link below or use email lookup.
+                    </p>
+                </div>
                 <div id="reader"></div>
                 <div class="message" id="scanMessage"></div>
+                <div style="margin-top: 16px;">
+                    <label for="ticketUrlInput">Paste ticket link</label>
+                    <div class="form-row">
+                        <input type="text" id="ticketUrlInput" placeholder="https://luma.com/check-in/evt-...?pk=..." autocomplete="off">
+                        <button class="btn" type="button" id="ticketUrlBtn">Print</button>
+                    </div>
+                </div>
             </div>
 
             <div class="card">
@@ -285,8 +311,27 @@
     <script>
         const pinRequired = {{ pin_required | tojson }};
         let scanner = null;
+        let scannerRunning = false;
         let processing = false;
         let lastScan = '';
+
+        function isSecureCameraContext() {
+            return window.isSecureContext || location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+        }
+
+        function scannerLibraryReady() {
+            return typeof window.Html5Qrcode !== 'undefined';
+        }
+
+        function updateScannerHint(text) {
+            const hint = document.getElementById('scannerHint');
+            if (hint) hint.textContent = text;
+        }
+
+        function setStartCameraEnabled(enabled) {
+            const btn = document.getElementById('startCameraBtn');
+            if (btn) btn.disabled = !enabled;
+        }
 
         function showMessage(el, text, type) {
             el.textContent = text;
@@ -369,24 +414,92 @@
             }
         }
 
-        async function startScanner() {
-            if (!window.Html5Qrcode) return;
-            if (scanner) return;
+        async function stopScanner() {
+            if (!scanner || !scannerRunning) return;
+            try {
+                await scanner.stop();
+            } catch (err) {
+                console.warn('Scanner stop failed', err);
+            }
+            scannerRunning = false;
+            setStartCameraEnabled(true);
+        }
 
-            scanner = new Html5Qrcode('reader');
-            const cameras = await Html5Qrcode.getCameras();
-            if (!cameras.length) {
-                showMessage(document.getElementById('scanMessage'), 'No camera found on this device.', 'error');
+        async function startScanner() {
+            const scanMessage = document.getElementById('scanMessage');
+
+            if (!scannerLibraryReady()) {
+                showMessage(
+                    scanMessage,
+                    'Scanner library failed to load. Check internet access or use paste ticket link / email lookup.',
+                    'error'
+                );
+                updateScannerHint('Scanner unavailable — use paste ticket link or email lookup.');
                 return;
             }
 
-            const backCamera = cameras.find(c => /back|rear|environment/i.test(c.label)) || cameras[cameras.length - 1];
-            await scanner.start(
-                backCamera.id,
-                { fps: 10, qrbox: { width: 260, height: 260 } },
-                handleScan,
-                () => {}
-            );
+            if (!isSecureCameraContext()) {
+                showMessage(
+                    scanMessage,
+                    'Camera requires HTTPS or localhost. Use paste ticket link or email lookup on this device.',
+                    'error'
+                );
+                updateScannerHint('Open this page via https:// or use paste ticket link / email lookup.');
+                return;
+            }
+
+            if (scannerRunning) return;
+
+            hideMessage(scanMessage);
+            setStartCameraEnabled(false);
+
+            try {
+                if (!scanner) {
+                    scanner = new Html5Qrcode('reader');
+                } else if (scannerRunning) {
+                    await stopScanner();
+                }
+
+                const cameras = await Html5Qrcode.getCameras();
+                if (!cameras.length) {
+                    throw new Error('No camera found on this device.');
+                }
+
+                const backCamera = cameras.find(c => /back|rear|environment/i.test(c.label))
+                    || cameras[cameras.length - 1];
+
+                const config = {
+                    fps: 10,
+                    qrbox: { width: 260, height: 260 },
+                    aspectRatio: 1.0,
+                };
+
+                try {
+                    await scanner.start(
+                        { facingMode: 'environment' },
+                        config,
+                        handleScan,
+                        () => {}
+                    );
+                } catch (environmentErr) {
+                    await scanner.start(
+                        backCamera.id,
+                        config,
+                        handleScan,
+                        () => {}
+                    );
+                }
+
+                scannerRunning = true;
+                updateScannerHint('Camera active — point at the guest Luma ticket QR.');
+            } catch (err) {
+                scannerRunning = false;
+                setStartCameraEnabled(true);
+                const message = err && err.message ? err.message : String(err);
+                showMessage(scanMessage, `Camera failed: ${message}`, 'error');
+                updateScannerHint('Camera unavailable — paste the ticket link or use email lookup.');
+                console.error('Scanner start failed', err);
+            }
         }
 
         async function unlockDesk() {
@@ -397,11 +510,15 @@
                 document.getElementById('pinGate').classList.add('hidden');
                 document.getElementById('desk').classList.remove('hidden');
                 await refreshStatus();
-                await startScanner();
+                if (isSecureCameraContext() && scannerLibraryReady()) {
+                    updateScannerHint('Tap Start camera when ready to scan tickets.');
+                }
             } catch (err) {
                 showMessage(pinMessage, err.message, 'error');
             }
         }
+
+        document.getElementById('startCameraBtn')?.addEventListener('click', startScanner);
 
         document.getElementById('unlockBtn')?.addEventListener('click', unlockDesk);
         document.getElementById('pinInput')?.addEventListener('keydown', (e) => {
@@ -418,6 +535,21 @@
             try {
                 await issueCredit({ email });
                 document.getElementById('emailInput').value = '';
+            } catch (err) {
+                showMessage(scanMessage, err.message, 'error');
+            }
+        });
+
+        document.getElementById('ticketUrlBtn').addEventListener('click', async () => {
+            const scanned_url = document.getElementById('ticketUrlInput').value.trim();
+            const scanMessage = document.getElementById('scanMessage');
+            if (!scanned_url) {
+                showMessage(scanMessage, 'Paste a Luma check-in URL.', 'error');
+                return;
+            }
+            try {
+                await issueCredit({ scanned_url });
+                document.getElementById('ticketUrlInput').value = '';
             } catch (err) {
                 showMessage(scanMessage, err.message, 'error');
             }
@@ -440,10 +572,24 @@
         });
 
         async function boot() {
+            if (!scannerLibraryReady()) {
+                showMessage(
+                    document.getElementById('scanMessage'),
+                    'Scanner library failed to load. Use paste ticket link or email lookup.',
+                    'error'
+                );
+            } else if (!isSecureCameraContext()) {
+                showMessage(
+                    document.getElementById('scanMessage'),
+                    'Camera needs HTTPS or localhost on this device. Use paste ticket link or email lookup.',
+                    'info'
+                );
+                updateScannerHint('Camera blocked on HTTP — paste ticket link or use email lookup.');
+            }
+
             if (!pinRequired) {
                 try {
                     await refreshStatus();
-                    await startScanner();
                 } catch (err) {
                     showMessage(document.getElementById('scanMessage'), err.message, 'error');
                 }

@@ -98,5 +98,5 @@ All require an unlocked session (PIN cookie) except the page itself.
 | "Guest is not approved" | Guest is waitlisted/declined on Luma |
 | "No credit links remaining" | Import more URLs in the desk admin panel |
 | "Not a Luma check-in URL" | Guest must show the ticket QR from Luma (not a random QR) |
-| Camera not working | Use HTTPS is not required on LAN; grant camera permission in the browser |
+| Camera not working | Browsers block camera on plain `http://192.168.x.x`. Use **Paste ticket link**, **email lookup**, or serve `/credits` over HTTPS. Tap **Start camera** after unlock and allow permission. |
 | Printer fails after scan | Check `/health` and USB connection |
