@@ -94,6 +94,7 @@ All require an unlocked session (PIN cookie) except the page itself.
 | Issue | Fix |
 |-------|-----|
 | "LUMA_API_KEY is not configured" | Set env vars and restart the Pi app |
+| Need to debug Luma responses | Check Pi logs (`journalctl -u ticket-printer -f` or terminal running `python3 app.py`). Each lookup logs status + full JSON body when `LUMA_LOG_RESPONSES=true` (default). Set `LUMA_LOG_RESPONSES=false` to reduce noise after debugging. |
 | "Guest is not approved" | Guest is waitlisted/declined on Luma |
 | "No credit links remaining" | Import more URLs in the desk admin panel |
 | "Not a Luma check-in URL" | Guest must show the ticket QR from Luma (not a random QR) |

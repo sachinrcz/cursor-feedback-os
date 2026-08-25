@@ -163,14 +163,19 @@ def create_credit_blueprint(get_printer: Callable):
             body, code = _print_claim(claim, reprint=claim.already_claimed)
             return jsonify(body), code
         except LumaConfigError as exc:
+            logger.error("Credit issue config error: %s", exc)
             return jsonify({"success": False, "error": str(exc)}), 500
         except LumaWrongEventError as exc:
+            logger.warning("Credit issue wrong event: %s", exc)
             return jsonify({"success": False, "error": str(exc)}), 400
         except LumaNotApprovedError as exc:
+            logger.warning("Credit issue guest not approved: %s", exc)
             return jsonify({"success": False, "error": str(exc)}), 403
         except LumaLookupError as exc:
+            logger.warning("Credit issue Luma lookup failed: %s", exc)
             return jsonify({"success": False, "error": str(exc)}), 404
         except LumaError as exc:
+            logger.warning("Credit issue Luma error: %s", exc)
             return jsonify({"success": False, "error": str(exc)}), 400
         except RuntimeError as exc:
             return jsonify({"success": False, "error": str(exc)}), 409
