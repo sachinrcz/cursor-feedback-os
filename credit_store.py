@@ -141,12 +141,21 @@ def claim_for_guest(
                 (guest_id,),
             ).fetchone()
             if existing:
+                conn.execute(
+                    """
+                    UPDATE links
+                    SET guest_name = ?, guest_email = ?
+                    WHERE id = ?
+                    """,
+                    (guest_name, guest_email, existing["id"]),
+                )
+                conn.commit()
                 return ClaimResult(
                     link_id=existing["id"],
                     url=existing["url"],
                     guest_id=existing["guest_id"],
-                    guest_name=existing["guest_name"] or guest_name,
-                    guest_email=existing["guest_email"],
+                    guest_name=guest_name,
+                    guest_email=guest_email or existing["guest_email"],
                     already_claimed=True,
                     claimed_at=existing["claimed_at"],
                 )

@@ -127,6 +127,52 @@ def _unwrap_guest_payload(data: dict) -> dict:
     return data
 
 
+def _pick_text(*values: object) -> str:
+    for value in values:
+        if value is None:
+            continue
+        text = str(value).strip()
+        if text:
+            return text
+    return ""
+
+
+def _extract_guest_name(data: dict) -> str:
+    """Resolve a display name from Luma guest payload shapes."""
+    user = data.get("user") if isinstance(data.get("user"), dict) else {}
+
+    first = _pick_text(
+        data.get("first_name"),
+        user.get("first_name"),
+        data.get("user_first_name"),
+    )
+    last = _pick_text(
+        data.get("last_name"),
+        user.get("last_name"),
+        data.get("user_last_name"),
+    )
+    combined = " ".join(part for part in (first, last) if part).strip()
+
+    return (
+        _pick_text(
+            data.get("name"),
+            data.get("user_name"),
+            user.get("name"),
+            combined,
+            first,
+        )
+        or "Guest"
+    )
+
+
+def _extract_guest_email(data: dict) -> str | None:
+    user = data.get("user") if isinstance(data.get("user"), dict) else {}
+    return (
+        _pick_text(data.get("email"), data.get("user_email"), user.get("email"))
+        or None
+    )
+
+
 def parse_checkin_url(raw: str) -> ParsedCheckIn:
     """Parse a Luma check-in URL or raw pk value."""
     text = (raw or "").strip()
@@ -242,14 +288,8 @@ def lookup_guest(*, event_id: str | None = None, guest_key: str | None = None, e
         )
         raise LumaLookupError("Luma response did not include a guest id.")
 
-    user = data.get("user") or {}
-    name = (
-        (data.get("name") or "").strip()
-        or (user.get("name") or "").strip()
-        or (user.get("first_name") or "").strip()
-        or "Guest"
-    )
-    email_value = (data.get("email") or user.get("email") or "").strip() or None
+    name = _extract_guest_name(data)
+    email_value = _extract_guest_email(data)
 
     logger.info(
         "Luma guest lookup ok: event_id=%s lookup_id=%s guest_id=%s name=%r status=%s",
